@@ -1,0 +1,87 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: load-new
+---
+kind: CronJob
+apiVersion: batch/v1
+metadata:
+  name: load-new
+spec:
+  schedule: '0 1 * * *'
+  concurrencyPolicy: Forbid
+  suspend: false
+  jobTemplate:
+    metadata:
+      creationTimestamp: null
+    spec:
+      backoffLimit: 0
+      template:
+        metadata:
+          creationTimestamp: null
+        spec:
+          restartPolicy: Never
+          activeDeadlineSeconds: 500
+          serviceAccountName: load-new
+          schedulerName: default-scheduler
+          terminationGracePeriodSeconds: 30
+          securityContext: {}
+          containers:
+            - name: load-new
+              image: 'quay.io/eformat/developer-redhat-com:latest'
+              env:
+              - name: DB_HOST
+                value: "host=postgres"
+              - name: CONNECTION_STRING
+                valueFrom:
+                  secretKeyRef:
+                    name: load-new
+                    key: connection_string
+              - name: DB_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: load-new
+                    key: db_password
+              command:
+                - /bin/bash
+                - '-c'
+                - >-
+                  /opt/app-root/src/developers-redhat-com.sh;
+                  export URL_FILE=$(ls /tmp/developers.redhat.com*.uri | head -1);
+                  python /opt/app-root/src/messing-with-models/pgvector-ingest-urls.py
+              resources: {}
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+              imagePullPolicy: Always
+          serviceAccount: vault
+          dnsPolicy: ClusterFirst
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 2
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: load-new
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["create", "get", "list", "update", "watch", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: load-new
+subjects:
+  - kind: ServiceAccount
+    name: load-new
+roleRef:
+  kind: Role
+  name: load-new
+  apiGroup: rbac.authorization.k8s.io
