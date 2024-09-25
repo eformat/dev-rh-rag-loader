@@ -46,15 +46,7 @@ spec:
               command:
                 - /bin/bash
                 - '-c'
-                - >-
-                  /opt/app-root/src/developers-redhat-com.sh;
-                  export URL_FILE=$(ls /tmp/developers.redhat.com*.uri | head -1);
-                  if [[ ! -z "${URL_FILE}"" ]]; then
-                    python /opt/app-root/src/messing-with-models/pgvector-ingest-urls.py
-                  else
-                    echo "nothing to ingest ..."
-                    exit 0
-                  fi
+                - /opt/app-root/src/developers-redhat-com.sh; export URL_FILE=$(ls /tmp/developers.redhat.com*.uri | head -1); [[ ! -z "${URL_FILE}" ]] && python /opt/app-root/src/messing-with-models/pgvector-ingest-urls.py
               resources: {}
               terminationMessagePath: /dev/termination-log
               terminationMessagePolicy: File
