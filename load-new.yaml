@@ -22,7 +22,7 @@ spec:
           creationTimestamp: null
         spec:
           restartPolicy: Never
-          activeDeadlineSeconds: 500
+          activeDeadlineSeconds: 3600
           serviceAccountName: load-new
           schedulerName: default-scheduler
           terminationGracePeriodSeconds: 30
