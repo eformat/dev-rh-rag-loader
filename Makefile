@@ -10,7 +10,7 @@ podman-login:
 
 # Build the oci image
 podman-build:
-	podman build . -t ${IMG} -f Containerfile
+	podman build --no-cache . -t ${IMG} -f Containerfile
 
 # Push the oci image
 podman-push: podman-build
